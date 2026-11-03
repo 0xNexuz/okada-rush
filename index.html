@@ -189,15 +189,15 @@ body{
 }
 .card-head h2{margin:0;font-family:var(--font-display);font-size:20px;font-weight:400}
 .card-head span{font-weight:800;font-size:12px;text-transform:uppercase;letter-spacing:.08em}
-.earn{font-family:var(--font-display);font-size:min(13cqw,50px);text-align:center;padding:14px 0 0;font-variant-numeric:tabular-nums}
-.badge{display:block;width:max-content;margin:6px auto 0;background:var(--stop);color:#fff;font-family:var(--font-display);font-size:12px;padding:4px 10px;border-radius:999px;letter-spacing:.05em}
-.rows{margin:12px 14px 0;display:grid;grid-template-columns:1fr auto;gap:4px 12px;font-weight:700;font-size:14px}
-.rows dt{color:#5d5545}
-.rows dd{margin:0;text-align:right;font-variant-numeric:tabular-nums}
-.stats3{display:grid;grid-template-columns:repeat(3,1fr);margin:12px 14px 0;border-top:2px dashed rgba(18,19,23,.2);padding-top:12px;text-align:center}
+.earn{font-family:var(--font-display);font-size:min(12cqw,7cqh,48px);text-align:center;padding:12px 0 0;font-variant-numeric:tabular-nums;line-height:1.1}
+.rows{margin:10px 14px 0;display:grid;grid-template-columns:1fr 1fr;gap:5px 18px;font-weight:700;font-size:14px}
+.kv{display:flex;justify-content:space-between;gap:8px;min-width:0}
+.kv span{color:#5d5545}
+.kv b{font-variant-numeric:tabular-nums}
+.stats3{display:grid;grid-template-columns:repeat(3,1fr);margin:10px 14px 0;border-top:2px dashed rgba(18,19,23,.2);padding-top:10px;text-align:center}
 .stats3 b{display:block;font-family:var(--font-display);font-size:17px;font-weight:400;font-variant-numeric:tabular-nums}
 .stats3 span{font-size:11px;font-weight:800;color:#6b6352;text-transform:uppercase;letter-spacing:.06em}
-.card-foot{margin:12px 14px 14px;display:flex;flex-direction:column;gap:8px}
+.card-foot{margin:10px 14px 12px;display:flex;flex-direction:column;gap:8px}
 .card-foot p{margin:0;font-weight:700;font-size:13px;color:#4c4536;line-height:1.4}
 .share{background:var(--ink);color:var(--paper);border-radius:12px;padding:10px 12px;font-family:var(--font-body);font-size:13px;line-height:1.45;white-space:pre-wrap;margin:0;-webkit-user-select:text;user-select:text}
 .share-row{display:flex;gap:8px}
@@ -252,8 +252,26 @@ body{
 .horn span{width:58px;height:58px;border-radius:50%;background:var(--danfo);display:grid;place-items:center;font-family:var(--font-display);font-size:13px;color:var(--ink);box-shadow:inset 0 0 0 2px var(--ink)}
 .horn.cool span{background:#d8cfb8;color:#6d6552}
 .horn:active{transform:translateY(3px);box-shadow:0 2px 0 var(--ink)}
+.gas{
+  pointer-events:auto;position:absolute;left:14px;bottom:18px;width:76px;height:76px;border-radius:50%;
+  border:3px solid var(--ink);padding:0;cursor:pointer;background:var(--paper);color:var(--ink);
+  box-shadow:0 5px 0 var(--ink);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;
+  touch-action:none;-webkit-touch-callout:none;
+}
+.gas b{font-family:var(--font-display);font-size:15px;font-weight:400;letter-spacing:.04em;line-height:1}
+.gas small{font-weight:800;font-size:10.5px;font-variant-numeric:tabular-nums;color:#5d5545}
+.gas.on{background:var(--go);transform:translateY(3px);box-shadow:0 2px 0 var(--ink)}
+.gas.on small{color:var(--ink)}
+.screen{scrollbar-width:thin;scrollbar-color:rgba(255,244,214,.25) transparent}
+@container (max-height: 760px){
+  .screen{gap:10px;padding-block:12px 14px}
+  .btn{padding:10px 14px}
+  .btn-big{font-size:22px;padding:11px 14px}
+  .card-head{padding:13px 14px 11px}
+  .logo{margin-top:2cqh}
+}
 .hint{
-  position:absolute;left:50%;bottom:112px;transform:translateX(-50%);width:max-content;max-width:78%;
+  position:absolute;left:50%;bottom:232px;transform:translateX(-50%);width:max-content;max-width:78%;
   background:var(--paper);color:var(--ink);padding:9px 14px;border-radius:12px;border:2px solid var(--ink);
   font-weight:800;font-size:14px;line-height:1.3;text-align:center;box-shadow:0 4px 0 var(--ink);text-wrap:balance;
 }
@@ -298,6 +316,7 @@ body{
         <div class="pill magnet" id="hud-magnet" hidden></div>
       </div>
       <button class="horn" id="btn-horn" aria-label="Horn"><span>HORN</span></button>
+      <button class="gas" id="btn-gas" aria-label="Hold to accelerate"><b>GAS</b><small id="hud-kmh">0 km/h</small></button>
       <div class="hint" id="hint" hidden></div>
     </div>
 
@@ -318,7 +337,7 @@ body{
           <button class="btn btn-ghost" id="btn-garage">Garage</button>
           <button class="btn btn-ghost" id="btn-missions">Missions <i class="dot" id="t-mdot" hidden></i></button>
         </div>
-        <p class="foot">Best ride <b id="t-best">₦0</b><span id="t-keys"><br>Keys: ← → steer · Space horn · P pause</span></p>
+        <p class="foot">Best ride <b id="t-best">₦0</b><span id="t-keys"><br>Keys: ← → steer · ↑ gas · ↓ brake · Space horn · P pause</span></p>
       </div>
     </section>
 
@@ -354,14 +373,13 @@ body{
       <div class="card">
         <div class="card-head"><h2 id="o-title">Ride over</h2><span id="o-mode">Free ride</span></div>
         <div class="earn" id="o-earn">₦0</div>
-        <span class="badge" id="o-best" hidden>New best</span>
-        <dl class="rows">
-          <dt>Fares</dt><dd id="o-fares">₦0</dd>
-          <dt>Tips</dt><dd id="o-tips">₦0</dd>
-          <dt>Coins</dt><dd id="o-coins">₦0</dd>
-          <dt>Smash bonus</dt><dd id="o-bonus">₦0</dd>
-          <dt id="o-streak-l" hidden>Streak reward</dt><dd id="o-streak" hidden>₦0</dd>
-        </dl>
+        <div class="rows">
+          <div class="kv"><span>Fares</span><b id="o-fares">₦0</b></div>
+          <div class="kv"><span>Tips</span><b id="o-tips">₦0</b></div>
+          <div class="kv"><span>Coins</span><b id="o-coins">₦0</b></div>
+          <div class="kv" id="o-bonus-row"><span>Smash</span><b id="o-bonus">₦0</b></div>
+          <div class="kv" id="o-streak-row" hidden><span>Streak</span><b id="o-streak">₦0</b></div>
+        </div>
         <div class="stats3">
           <div><b id="o-dist">0 m</b><span>Distance</span></div>
           <div><b id="o-drops">0</b><span>Drops</span></div>
@@ -375,8 +393,7 @@ body{
               <a class="mini-btn alt" id="btn-x" href="https://x.com" target="_blank" rel="noopener">Post on X</a>
             </div>
           </div>
-          <p id="o-wallet"></p>
-          <p id="o-missions"></p>
+          <p id="o-note"></p>
         </div>
       </div>
       <div class="menu">
@@ -414,7 +431,8 @@ const lerp = (a, b, t) => a + (b - a) * t;
 const easeInOut = t => t < .5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
 const pick = (arr, r = Math.random) => arr[Math.floor(r() * arr.length)];
 const TAU = Math.PI * 2;
-const SHARE_URL = '';
+const SHARE_URL = 'https://okada-rush.vercel.app';
+const KMH = 0.18; /* screen px/s to km/h at 0.05 m per px */
 const reduceMotion = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 function mulberry32(a) { return function () { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
@@ -499,6 +517,7 @@ const MISSION_TYPES = {
   nocrash_run: { scope: 'run', tiers: [300, 600, 1000], reward: [350, 650, 1000], label: n => `Ride ${n} m without a crash` },
   tips_run: { scope: 'run', tiers: [300, 700, 1300], reward: [350, 650, 1000], label: n => `Earn ${fmt(n)} in tips in one ride` },
   daily_play: { scope: 'total', tiers: [1, 1, 1], reward: [500, 500, 500], label: () => `Ride today's Daily Route` },
+  speed_run: { scope: 'run', tiers: [80, 100, 120], reward: [300, 600, 1000], label: n => `Hit ${n} km/h` },
 };
 
 /* ======================= save ======================= */
@@ -995,8 +1014,12 @@ function update(dt) {
   g.t += dt;
   const d = clamp(g.t / 160, 0, 1);
   let targetSpeed = g.mode === 'attract' ? 250 : lerp(250, 520, d);
+  const gas = !g.auto && (keys.gas || gasTouch), brake = !g.auto && keys.brake && !gas;
+  g.gas = gas;
+  if (gas) targetSpeed *= 1.42; else if (brake) targetSpeed *= 0.62;
   if (g.turbo > 0) targetSpeed *= 1.55;
   if (g.slowPot > 0) targetSpeed *= 0.72;
+  targetSpeed = Math.min(targetSpeed, 820);
   if (g.dead) targetSpeed = 0;
   g.speed = lerp(g.speed, targetSpeed, 1 - Math.exp(-dt * (g.dead ? 3 : 4)));
   const scroll = g.speed * dt; g.scroll += scroll;
@@ -1146,6 +1169,7 @@ function update(dt) {
 
   /* particles */
   if (!g.dead && Math.abs(b.vx) > 220 && Math.random() < 0.5) g.parts.push({ kind: 'dust', x: b.x, y: b.y + 28, vx: -b.vx * 0.05, vy: 20, life: .45, max: .45, size: 3, color: '#a9a297', world: true });
+  if (g.gas && !g.dead && Math.random() < 0.6) g.parts.push({ kind: 'dust', x: b.x + 9, y: b.y + 30, vx: (Math.random() - .5) * 20, vy: 50 + Math.random() * 40, life: .4, max: .4, size: 2.5, color: '#8f949c', world: false });
   if (g.turbo > 0 && !g.dead) for (let i = 0; i < 2; i++) g.parts.push({ kind: 'fire', x: b.x + (Math.random() - .5) * 8, y: b.y + 30, vx: (Math.random() - .5) * 40, vy: 60 + Math.random() * 60, life: .35, max: .35, size: 5 + Math.random() * 4, color: Math.random() < .5 ? '#ff5a1f' : '#ffcf3d', world: false });
   for (const p of g.parts) {
     p.life -= real;
@@ -1164,11 +1188,11 @@ function update(dt) {
     if (tu.step === 0) { showHint(touchUI ? 'Drag anywhere to steer' : 'Drag, or use ← →, to steer'); if (tu.moved > 80 || tu.t > 5) { tu.step = 1; tu.t = 0; } }
     else if (tu.step === 1) { showHint(g.peds.some(p => p.y > 0) ? 'Ride along the curb to pick up the waving passenger' : 'Watch the roadside for passengers'); }
     else if (tu.step === 2) { showHint('Drop them at the bus stop with the same colour'); }
-    else if (tu.step === 3) { showHint('Dodge traffic. Use the horn to clear your lane.'); if (tu.t > 4) { g.tut = null; showHint(''); S.tutorial = true; persist(); } }
+    else if (tu.step === 3) { showHint(touchUI ? 'Hold GAS to speed up: faster drops pay bigger tips. HORN clears your lane.' : 'Hold ↑ or GAS to speed up: faster drops pay bigger tips. Space clears your lane.'); if (tu.t > 5) { g.tut = null; showHint(''); S.tutorial = true; persist(); } }
   }
 
   /* run missions that track distance */
-  if (g.mode !== 'attract' && !g.dead) { missionEvent('dist_run', g.dist); missionEvent('nocrash_run', g.noCrash); }
+  if (g.mode !== 'attract' && !g.dead) { missionEvent('dist_run', g.dist); missionEvent('nocrash_run', g.noCrash); missionEvent('speed_run', Math.round(g.speed * KMH)); }
 
   if (g.dead && g.deadT > 1.3 && state === 'playing') endRun();
 }
@@ -1505,7 +1529,7 @@ function render() {
 }
 
 /* ======================= HUD ======================= */
-const hud = { cash: $('#hud-cash'), dist: $('#hud-dist'), district: $('#hud-district'), helmets: $('#hud-helmets'), riders: $('#hud-riders'), combo: $('#hud-combo'), turbo: $('#hud-turbo'), magnet: $('#hud-magnet'), horn: $('#btn-horn') };
+const hud = { cash: $('#hud-cash'), dist: $('#hud-dist'), district: $('#hud-district'), helmets: $('#hud-helmets'), riders: $('#hud-riders'), combo: $('#hud-combo'), turbo: $('#hud-turbo'), magnet: $('#hud-magnet'), horn: $('#btn-horn'), kmh: $('#hud-kmh') };
 let hc = {};
 function setText(el, key, val) { if (hc[key] !== val) { hc[key] = val; el.textContent = val; } }
 const helmetSVG = on => `<svg viewBox="0 0 24 18" class="${on ? '' : 'lost'}" aria-hidden="true"><path d="M2 14a10 10 0 0 1 20 0v2H2z" fill="currentColor"/><path d="M12 5v9" stroke="#121317" stroke-width="2" opacity=".45"/></svg>`;
@@ -1533,6 +1557,7 @@ function updateHUD() {
   hud.combo.hidden = g.combo < 2; setText(hud.combo, 'combo', 'x' + mult.toFixed(2).replace(/\.?0+$/, '') + ' COMBO');
   hud.turbo.hidden = !(g.turbo > 0); if (g.turbo > 0) setText(hud.turbo, 'turbo', 'PEPPER ' + Math.ceil(g.turbo) + 's');
   hud.magnet.hidden = !(g.magnet > 0); if (g.magnet > 0) setText(hud.magnet, 'magnet', 'MAGNET ' + Math.ceil(g.magnet) + 's');
+  setText(hud.kmh, 'kmh', Math.round(g.speed * KMH) + ' km/h');
   hud.horn.style.setProperty('--p', (1 - g.horn / g.hornMax).toFixed(3));
   hud.horn.classList.toggle('cool', g.horn > 0);
 }
@@ -1628,6 +1653,7 @@ function startRun(mode) {
   ensureMissions();
   newRun(mode);
   hc = {};
+  keys.gas = keys.brake = false; gasOff();
   showScreen('playing');
   if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
   toast(mode === 'daily' ? `<small>DAILY ROUTE #${dayNumber()}</small>Same road for everyone today` : '<small>YABA</small>Go get passengers', 'district', 1.8);
@@ -1646,50 +1672,67 @@ function endRun() {
   $('#o-title').textContent = newBest ? 'New best ride' : g.helmets <= 0 ? 'Out of helmets' : 'Ride over';
   $('#o-mode').textContent = g.mode === 'daily' ? `Daily #${dayNumber()}` : 'Free ride';
   $('#o-earn').textContent = fmt(earned);
-  $('#o-best').hidden = !newBest;
   $('#o-fares').textContent = fmt(g.cash.fares); $('#o-tips').textContent = fmt(g.cash.tips);
   $('#o-coins').textContent = fmt(g.cash.coins); $('#o-bonus').textContent = fmt(g.cash.bonus);
-  $('#o-streak-l').hidden = $('#o-streak').hidden = !streakReward; $('#o-streak').textContent = '+' + fmt(streakReward);
+  $('#o-bonus-row').hidden = !g.cash.bonus;
+  $('#o-streak-row').hidden = !streakReward; $('#o-streak').textContent = '+' + fmt(streakReward);
   $('#o-dist').textContent = fmtDist(g.dist); $('#o-drops').textContent = g.drops; $('#o-combo').textContent = g.maxCombo;
-  $('#o-wallet').textContent = `Wallet: ${fmt(S.wallet)}. Spend it in the Garage on upgrades and new bikes.`;
-  const ready = missionsReady(), left = S.missions.list.filter(m => !m.done).length;
-  $('#o-missions').textContent = ready ? `${ready} mission reward${ready > 1 ? 's' : ''} ready to claim.` : left ? `${left} mission${left > 1 ? 's' : ''} left today.` : 'All missions done today. New ones at midnight.';
+  overNote();
   const box = $('#o-share-box'); box.hidden = g.mode !== 'daily';
   if (g.mode === 'daily') { const txt = shareText(g); $('#o-share').textContent = txt; $('#btn-x').href = 'https://x.com/intent/post?text=' + encodeURIComponent(txt + '\n#OkadaRush'); }
   showScreen('over');
+}
+function overNote() {
+  const ready = missionsReady(), left = S.missions.list.filter(m => !m.done).length;
+  const m = ready ? `${ready} mission reward${ready > 1 ? 's' : ''} to claim` : left ? `${left} mission${left > 1 ? 's' : ''} left today` : 'All missions done today';
+  $('#o-note').textContent = `Wallet ${fmt(S.wallet)} · ${m}`;
 }
 function pause() { if (state !== 'playing') return; AudioFX.engine(false); showScreen('pause'); }
 function resume() { if (state !== 'paused') return; showScreen('playing'); last = performance.now(); }
 function toMenu() { newRun('attract'); showScreen('title'); }
 
 /* ======================= input ======================= */
-const keys = { left: false, right: false };
-let dragging = false, lastX = 0;
+const keys = { left: false, right: false, gas: false, brake: false };
+let dragging = false, dragId = null, lastX = 0, gasTouch = false;
 stage.addEventListener('pointerdown', e => {
   AudioFX.resume();
-  if (state !== 'playing' || e.target.closest('button')) return;
-  dragging = true; lastX = e.clientX;
+  if (state !== 'playing' || e.target.closest('button') || dragging) return;
+  dragging = true; dragId = e.pointerId; lastX = e.clientX;
   try { stage.setPointerCapture(e.pointerId); } catch (_) { }
 });
 stage.addEventListener('pointermove', e => {
-  if (!dragging || state !== 'playing' || !G || G.auto) return;
+  if (!dragging || e.pointerId !== dragId || state !== 'playing' || !G || G.auto) return;
   const dx = (e.clientX - lastX) / SCALE; lastX = e.clientX;
   G.target += dx * 1.35; if (G.tut) G.tut.moved += Math.abs(dx);
 });
-const endDrag = () => { dragging = false; };
+const endDrag = e => { if (e.pointerId === dragId) { dragging = false; dragId = null; } };
 stage.addEventListener('pointerup', endDrag); stage.addEventListener('pointercancel', endDrag);
+const gasBtn = $('#btn-gas');
+const gasOn = e => { e.preventDefault(); e.stopPropagation(); AudioFX.resume(); gasTouch = true; gasBtn.classList.add('on'); try { gasBtn.setPointerCapture(e.pointerId); } catch (_) { } };
+const gasOff = () => { gasTouch = false; gasBtn.classList.remove('on'); };
+gasBtn.addEventListener('pointerdown', gasOn);
+['pointerup', 'pointercancel', 'lostpointercapture'].forEach(ev => gasBtn.addEventListener(ev, gasOff));
+gasBtn.addEventListener('contextmenu', e => e.preventDefault());
 addEventListener('keydown', e => {
   AudioFX.resume();
   const k = e.code;
   if (state === 'playing') {
     if (k === 'ArrowLeft' || k === 'KeyA') { keys.left = true; e.preventDefault(); }
     else if (k === 'ArrowRight' || k === 'KeyD') { keys.right = true; e.preventDefault(); }
-    else if (k === 'Space' || k === 'ArrowUp' || k === 'KeyW' || k === 'KeyH') { honk(); e.preventDefault(); }
+    else if (k === 'ArrowUp' || k === 'KeyW') { keys.gas = true; gasBtn.classList.add('on'); e.preventDefault(); }
+    else if (k === 'ArrowDown' || k === 'KeyS') { keys.brake = true; e.preventDefault(); }
+    else if (k === 'Space' || k === 'KeyH') { honk(); e.preventDefault(); }
     else if (k === 'KeyP' || k === 'Escape') { pause(); e.preventDefault(); }
   } else if (state === 'paused' && (k === 'KeyP' || k === 'Escape')) { resume(); e.preventDefault(); }
 });
-addEventListener('keyup', e => { if (e.code === 'ArrowLeft' || e.code === 'KeyA') keys.left = false; if (e.code === 'ArrowRight' || e.code === 'KeyD') keys.right = false; });
-addEventListener('blur', () => { keys.left = keys.right = false; });
+addEventListener('keyup', e => {
+  const k = e.code;
+  if (k === 'ArrowLeft' || k === 'KeyA') keys.left = false;
+  if (k === 'ArrowRight' || k === 'KeyD') keys.right = false;
+  if (k === 'ArrowUp' || k === 'KeyW') { keys.gas = false; if (!gasTouch) gasBtn.classList.remove('on'); }
+  if (k === 'ArrowDown' || k === 'KeyS') keys.brake = false;
+});
+addEventListener('blur', () => { keys.left = keys.right = keys.gas = keys.brake = false; gasOff(); });
 document.addEventListener('visibilitychange', () => { if (document.hidden) pause(); });
 
 hud.horn.addEventListener('pointerdown', e => { e.preventDefault(); AudioFX.resume(); honk(); });
@@ -1707,7 +1750,7 @@ $('#btn-again').onclick = () => { AudioFX.play('ui'); startRun(lastRun && lastRu
 $('#btn-o-menu').onclick = () => { AudioFX.play('ui'); toMenu(); };
 document.querySelectorAll('[data-back]').forEach(b => b.onclick = () => {
   AudioFX.play('ui');
-  if (prevScreen === 'over') { showScreen('over'); $('#o-wallet').textContent = `Wallet: ${fmt(S.wallet)}. Spend it in the Garage on upgrades and new bikes.`; }
+  if (prevScreen === 'over') { showScreen('over'); overNote(); }
   else showScreen('title');
 });
 $('#btn-sound').onclick = () => { S.muted = !S.muted; persist(); AudioFX.resume(); AudioFX.setMuted(S.muted); soundIcon(); };
