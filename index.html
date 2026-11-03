@@ -63,7 +63,7 @@ body{
   padding-block:10px;
 }
 .stage{
-  position:relative;height:100%;width:100%;max-width:500px;
+  position:relative;height:100%;width:100%;
   border-radius:22px;overflow:hidden;
   background:var(--asphalt);
   box-shadow:0 0 0 3px var(--ink),0 0 0 4px rgba(255,244,214,.08),0 30px 80px rgba(0,0,0,.6);
@@ -98,7 +98,8 @@ body{
 .dot{width:9px;height:9px;border-radius:50%;background:var(--stop);display:inline-block;box-shadow:0 0 0 2px var(--ink)}
 
 /* ---------- screens ---------- */
-.screen{position:absolute;inset:0;display:flex;flex-direction:column;gap:14px;padding:16px 16px 22px;box-sizing:border-box;overflow-y:auto}
+.screen{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;gap:14px;padding:16px 16px 22px;box-sizing:border-box;overflow-y:auto}
+.screen > *{width:100%;max-width:460px;box-sizing:border-box}
 .scrim{background:linear-gradient(180deg, rgba(18,19,23,.9) 0%, rgba(18,19,23,.3) 34%, rgba(18,19,23,.25) 52%, rgba(18,19,23,.94) 100%)}
 .solid{background:rgba(18,19,23,.93)}
 .top-row{display:flex;justify-content:space-between;align-items:center;gap:8px}
@@ -671,17 +672,20 @@ let REC = null;
 function sfx(name, k) { if (G && G.mode === 'attract') return; if (REC) REC.events.push({ name, k, t: REC.t }); AudioFX.play(name, k); }
 
 /* ======================= layout ======================= */
-let SCALE = 1, H = 640, DPR = 1, G = null, state = 'title', prevScreen = 'title';
+let SCALE = 1, H = 640, DPR = 1, VIEW_W = W, OX = 0, G = null, state = 'title', prevScreen = 'title';
+/* The road world is always 360 units wide. Portrait screens fit that width; wider screens keep at least
+   560 units of road visible top to bottom and show extra city (rooftops) to the left and right. */
 function layout() {
   const cs = getComputedStyle(shell);
   const aw = shell.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
   const ah = shell.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom);
-  const w = Math.max(200, Math.floor(Math.min(aw, ah * 0.64, 500)));
-  stage.style.width = w + 'px'; stage.style.height = Math.floor(ah) + 'px';
-  DPR = Math.min(window.devicePixelRatio || 1, 2);
-  canvas.width = Math.round(w * DPR); canvas.height = Math.round(Math.floor(ah) * DPR);
-  SCALE = w / W; H = Math.floor(ah) / SCALE;
-  if (G) G.bike.y = H - 150;
+  const w = Math.max(200, Math.floor(aw)), h = Math.max(300, Math.floor(ah));
+  stage.style.width = w + 'px'; stage.style.height = h + 'px';
+  DPR = Math.min(window.devicePixelRatio || 1, 2, Math.sqrt(4.5e6 / (w * h)));
+  canvas.width = Math.round(w * DPR); canvas.height = Math.round(h * DPR);
+  SCALE = Math.min(w / W, h / 560);
+  H = h / SCALE; VIEW_W = w / SCALE; OX = (VIEW_W - W) / 2;
+  if (G) { G.bike.y = H - 150; if (Math.abs((G.roofOX || 0) - OX) > 4) fillRoofs(G); }
 }
 
 function makePattern(fn, size = 128) { const c = document.createElement('canvas'); c.width = c.height = size; fn(c.getContext('2d'), size); return ctx.createPattern(c, 'repeat'); }
@@ -691,6 +695,40 @@ const roadPat = makePattern((x, s) => {
   x.strokeStyle = 'rgba(0,0,0,.35)'; x.lineWidth = 1;
   for (let k = 0; k < 3; k++) { x.beginPath(); let px = Math.random() * s, py = Math.random() * s; x.moveTo(px, py); for (let j = 0; j < 5; j++) { px += (Math.random() - .5) * 18; py += Math.random() * 12; x.lineTo(px, py); } x.stroke(); }
 });
+
+const zincPat = makePattern((x, s) => { for (let i = 0; i < s; i += 4) { x.fillStyle = 'rgba(0,0,0,.22)'; x.fillRect(i, 0, 1.4, s); x.fillStyle = 'rgba(255,255,255,.1)'; x.fillRect(i + 2, 0, 1, s); } }, 32);
+
+/* ======================= city beside the road (wide screens) ======================= */
+const ROOF_COLORS = ['#8a5236', '#9a6a46', '#7b4a33', '#9aa3a8', '#3f6f9a', '#a8392d', '#6f7a63'];
+function makeRoof(x, y, w, h) {
+  const concrete = Math.random() < 0.3;
+  const r = { x, y, w, h, concrete, c: concrete ? pick(['#b9b3a6', '#a9a397', '#c4bdae']) : pick(ROOF_COLORS), items: [] };
+  const inX = m => m + Math.random() * Math.max(1, w - 2 * m), inY = m => m + Math.random() * Math.max(1, h - 2 * m);
+  const tanks = concrete ? 1 + Math.floor(Math.random() * 3) : (Math.random() < 0.45 ? 1 : 0);
+  for (let i = 0; i < tanks; i++) r.items.push({ k: 'tank', dx: inX(11), dy: inY(11), s: 6 + Math.random() * 3 });
+  if (Math.random() < 0.25) r.items.push({ k: 'dish', dx: inX(9), dy: inY(9) });
+  if (concrete && w > 50 && h > 40 && Math.random() < 0.4) r.items.push({ k: 'solar', dx: 6 + Math.random() * (w - 42), dy: 6 + Math.random() * (h - 30) });
+  if (!concrete && Math.random() < 0.55) { const s = 6 + Math.random() * 10; r.items.push({ k: 'rust', dx: inX(s), dy: inY(s), s }); }
+  return r;
+}
+/* Adds one row of buildings above `bottom` on one side; returns the row's top edge. */
+function spawnRoofRow(g, side, bottom) {
+  const rowH = 74 + Math.random() * 86, y = bottom - rowH, limit = OX + 24;
+  let used = 4;
+  while (used < limit) {
+    const bw = 56 + Math.random() * 110;
+    const x = side < 0 ? -used - bw : W + used;
+    g.roofs.push(makeRoof(x + 3, y + 5, bw - 6, rowH - 10));
+    used += bw;
+  }
+  return y;
+}
+function fillRoofs(g) {
+  g.roofs = []; g.roofOX = OX; g.roofTop = { L: H + 20, R: H + 20 };
+  if (OX < 2) return;
+  while (g.roofTop.L > -40) g.roofTop.L = spawnRoofRow(g, -1, g.roofTop.L);
+  while (g.roofTop.R > -40) g.roofTop.R = spawnRoofRow(g, 1, g.roofTop.R);
+}
 
 /* ======================= run setup ======================= */
 function newRun(mode) {
@@ -715,6 +753,7 @@ function newRun(mode) {
     skin: skinById(S.skin),
   };
   G = g;
+  fillRoofs(g);
   for (let y = -40; y < H + 60; y += 64) { spawnScenery(-1, y + Math.random() * 20); spawnScenery(1, y + 30 + Math.random() * 20); }
   return g;
 }
@@ -1166,6 +1205,13 @@ function update(dt) {
   /* scenery */
   for (const s of g.scenery) { s.y += scroll; if (s.kind === 'people') s.y += s.walk * dt; }
   g.scenery = g.scenery.filter(s => s.y < H + 60);
+  if (OX >= 2 && g.roofTop) {
+    for (const r of g.roofs) r.y += scroll;
+    g.roofTop.L += scroll; g.roofTop.R += scroll;
+    while (g.roofTop.L > -40) g.roofTop.L = spawnRoofRow(g, -1, g.roofTop.L);
+    while (g.roofTop.R > -40) g.roofTop.R = spawnRoofRow(g, 1, g.roofTop.R);
+    g.roofs = g.roofs.filter(r => r.y < H + 30);
+  }
 
   /* particles */
   if (!g.dead && Math.abs(b.vx) > 220 && Math.random() < 0.5) g.parts.push({ kind: 'dust', x: b.x, y: b.y + 28, vx: -b.vx * 0.05, vy: 20, life: .45, max: .45, size: 3, color: '#a9a297', world: true });
@@ -1497,8 +1543,9 @@ function render() {
   ctx.setTransform(DPR * SCALE, 0, 0, DPR * SCALE, 0, 0);
   let sx = 0, sy = 0;
   if (g.shake > 0) { const m = g.shake * (reduceMotion ? .25 : 1); sx = (Math.random() - .5) * m; sy = (Math.random() - .5) * m; }
-  ctx.save(); ctx.translate(sx, sy);
+  ctx.save(); ctx.translate(OX + sx, sy);
   drawGround();
+  drawCity();
   for (const s of g.scenery) if (s.kind !== 'palm') drawScenery(s);
   for (const s of g.stops) drawStopZone(s);
   for (const p of g.pots) drawPot(p);
@@ -1514,18 +1561,53 @@ function render() {
   drawParticles(); drawPopups();
   ctx.restore();
   if (g.turbo > 0) {
-    const grd = ctx.createRadialGradient(W / 2, H / 2, H * .3, W / 2, H / 2, H * .75);
+    const R = Math.max(H, VIEW_W);
+    const grd = ctx.createRadialGradient(VIEW_W / 2, H / 2, R * .3, VIEW_W / 2, H / 2, R * .75);
     grd.addColorStop(0, 'rgba(255,90,31,0)'); grd.addColorStop(1, `rgba(255,90,31,${.28 * Math.min(1, g.turbo)})`);
-    ctx.fillStyle = grd; ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = grd; ctx.fillRect(0, 0, VIEW_W, H);
     ctx.lineCap = 'round';
-    for (let i = 0; i < 14; i++) {
-      const lx = (i * 71.3) % W, len = 50 + (i % 4) * 22, ly = ((i * 137 + g.scroll * 2.2) % (H + len)) - len;
+    const lines = Math.ceil(14 * VIEW_W / W);
+    for (let i = 0; i < lines; i++) {
+      const lx = (i * 71.3) % VIEW_W, len = 50 + (i % 4) * 22, ly = ((i * 137 + g.scroll * 2.2) % (H + len)) - len;
       const lg = ctx.createLinearGradient(0, ly, 0, ly + len);
       lg.addColorStop(0, 'rgba(255,236,200,0)'); lg.addColorStop(1, 'rgba(255,236,200,.55)');
       ctx.strokeStyle = lg; ctx.lineWidth = i % 3 ? 1.5 : 2.5; ctx.beginPath(); ctx.moveTo(lx, ly); ctx.lineTo(lx, ly + len); ctx.stroke();
     }
   }
-  if (g.flash > 0) { ctx.fillStyle = `rgba(255,255,255,${g.flash * .5})`; ctx.fillRect(0, 0, W, H); }
+  if (g.flash > 0) { ctx.fillStyle = `rgba(255,255,255,${g.flash * .5})`; ctx.fillRect(0, 0, VIEW_W, H); }
+}
+function drawCity() {
+  if (OX < 2 || !G.roofs) return;
+  const c = ctx;
+  c.fillStyle = '#3a322b'; c.fillRect(-OX - 4, 0, OX + 4, H); c.fillRect(W, 0, OX + 4, H);
+  for (const r of G.roofs) {
+    if (r.y > H || r.y + r.h < 0) continue;
+    c.fillStyle = 'rgba(0,0,0,.35)'; c.fillRect(r.x + 4, r.y + 5, r.w, r.h);
+    c.fillStyle = r.c; c.fillRect(r.x, r.y, r.w, r.h);
+    c.save(); c.translate(r.x, r.y);
+    if (r.concrete) { c.strokeStyle = 'rgba(0,0,0,.22)'; c.lineWidth = 2; c.strokeRect(3, 3, r.w - 6, r.h - 6); }
+    else { c.fillStyle = zincPat; c.fillRect(0, 0, r.w, r.h); c.fillStyle = 'rgba(255,255,255,.2)'; c.fillRect(0, r.h / 2 - 1.5, r.w, 3); }
+    for (const it of r.items) {
+      if (it.k === 'tank') {
+        c.fillStyle = 'rgba(0,0,0,.3)'; circle(c, it.dx + 2, it.dy + 3, it.s); c.fill();
+        c.fillStyle = '#1b1c1f'; circle(c, it.dx, it.dy, it.s); c.fill();
+        c.strokeStyle = '#3a3c42'; c.lineWidth = 1.2; circle(c, it.dx, it.dy, it.s * .55); c.stroke();
+        c.fillStyle = 'rgba(255,255,255,.25)'; circle(c, it.dx - it.s * .35, it.dy - it.s * .35, it.s * .22); c.fill();
+      } else if (it.k === 'dish') {
+        c.fillStyle = '#d9dcdf'; ellipse(c, it.dx, it.dy, 5.5, 4.5); c.fill();
+        c.fillStyle = '#8a8f98'; circle(c, it.dx, it.dy, 1.4); c.fill();
+      } else if (it.k === 'solar') {
+        c.fillStyle = '#1f3f6e'; c.fillRect(it.dx, it.dy, 30, 18);
+        c.strokeStyle = '#5f86b8'; c.lineWidth = .8; c.beginPath();
+        for (let k = 1; k < 4; k++) { c.moveTo(it.dx + k * 7.5, it.dy); c.lineTo(it.dx + k * 7.5, it.dy + 18); }
+        c.moveTo(it.dx, it.dy + 9); c.lineTo(it.dx + 30, it.dy + 9); c.stroke();
+      } else if (it.k === 'rust') {
+        c.fillStyle = 'rgba(90,38,18,.38)'; ellipse(c, it.dx, it.dy, it.s, it.s * .7); c.fill();
+      }
+    }
+    c.restore();
+  }
+  c.fillStyle = 'rgba(0,0,0,.35)'; c.fillRect(-4, 0, 4, H); c.fillRect(W, 0, 4, H);
 }
 
 /* ======================= HUD ======================= */
