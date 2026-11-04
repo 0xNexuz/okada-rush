@@ -17,6 +17,8 @@
 <meta name="twitter:description" content="Ride an okada through Lagos traffic: pick up passengers, drop them at the right stop. One thumb, new route daily.">
 <meta name="twitter:image" content="https://okada-rush.vercel.app/og.png">
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}</style>
+<script>window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };</script>
+<script defer src="/_vercel/insights/script.js"></script>
 <title>Okada Rush</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <meta name="description" content="Ride an okada through Lagos traffic: pick up passengers, drop them at the right stop. One thumb, new route daily.">
@@ -1730,8 +1732,10 @@ function renderMissions() {
 }
 
 /* ======================= run lifecycle ======================= */
+function track(name, data) { try { if (typeof window.va === 'function') window.va('event', { name, data }); } catch (_) { } }
 function startRun(mode) {
   AudioFX.resume();
+  track('Ride started', { mode });
   ensureMissions();
   newRun(mode);
   hc = {};
